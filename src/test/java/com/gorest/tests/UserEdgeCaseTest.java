@@ -14,57 +14,155 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 
-/**
- * Scenario 9–10: Edge Cases & Security
- *
- *  9.  GET  /users/{id} — non-existent ID → 404
- * 10.  POST /users — no token / invalid token → 401
- */
 @Feature("Users Edge Cases & Security")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserEdgeCaseTest extends BaseTest {
+    private static int helperUserId;
 
-    // ─── Scenario 9 ────────────────────────────────────────────
+    void createUserWithDefaultUser() {
+        User defaultUser = TestDataGenerator.randomUser();
+        Response defaultUserResponse = userApi.createUser(defaultUser);
+        AssertionHelper.assertStatusCode(defaultUserResponse, 201);
+        helperUserId = defaultUserResponse.jsonPath().getInt("id");
+    };
+
+    // ─── Scenario 16 ────────────────────────────────────────────
 
     @Test
-    @Order(9)
+    @Order(16)
     @Severity(SeverityLevel.NORMAL)
-    @DisplayName("[Scenario 9] GET /users/{id} — non-existent ID should return 404")
+    @DisplayName("[Scenario 16] GET /users/{id} — non-existent ID should return 404")
     @Description("Fetch a user with an ID that does not exist in the system. Server must return 404 Not Found")
     void getUser_withNonExistentId_shouldReturn404() {
-        // ใช้ ID ที่มีโอกาสน้อยมากที่จะมีอยู่จริงในระบบ
         int nonExistentId = 999_999_999;
 
         Response response = userApi.getUser(nonExistentId);
 
         AssertionHelper.assertStatusCode(response, 404);
+        AssertionHelper.assertErrorMessage(response, "Resource not found");
 
-        log.info("[Scenario 9] PASS — ID={} correctly returned 404", nonExistentId);
+        log.info("[Scenario 16] PASS — ID={} correctly returned 404", nonExistentId);
     }
 
-    // ─── Scenario 10 ───────────────────────────────────────────
+    // ─── Scenario 17 ───────────────────────────────────────────
 
     @Test
-    @Order(10)
+    @Order(17)
     @Severity(SeverityLevel.CRITICAL)
-    @DisplayName("[Scenario 10] POST /users — invalid token should return 401")
+    @DisplayName("[Scenario 17] POST /users — invalid token should return 401")
     @Description("Attempt to create a user using an invalid Bearer token. Server must reject with 401 Unauthorized")
     void createUser_withInvalidToken_shouldReturn401() {
-        User payload = TestDataGenerator.randomUser();
+        User user = TestDataGenerator.randomUser();
 
-        // ส่ง Request พร้อม Token ปลอม แทนที่จะใช้ userApi (ซึ่งมี token จริง)
         Response response = RestAssured.given()
                 .baseUri(ConfigManager.getBaseUrl())
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .header("Authorization", "Bearer invalid_token_12345")
-                .body(payload)
+                .body(user)
                 .when()
                 .post("/users");
 
         AssertionHelper.assertStatusCode(response, 401);
+        AssertionHelper.assertErrorMessage(response, "Invalid token");
 
-        log.info("[Scenario 10] PASS — invalid token correctly returned 401, body={}",
+        log.info("[Scenario 17] PASS — invalid token correctly returned 401, body={}",
                 response.body().asString());
     }
+
+    // ─── Scenario 18 ───────────────────────────────────────────
+    @Test
+    @Order(18)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 18] DELETE /users/{id} — non-existent ID should return 404")
+    @Description("Delete a user with an ID that does not exist in the system. Server must return 404 Not Found")
+    void deleteUser_withNonExistentId_shouldReturn404() {
+        int nonExistentId = 999_999_999;
+        Response response = userApi.deleteUser(nonExistentId);
+        AssertionHelper.assertStatusCode(response, 404);
+        AssertionHelper.assertErrorMessage(response, "Resource not found");
+        log.info("[Scenario 18] PASS — ID={} correctly returned 404", nonExistentId);
+    }
+
+    // ─── Scenario 19 ───────────────────────────────────────────
+    @Test
+    @Order(19)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 19] PUT /users/{id} — non-existent ID should return 404")
+    @Description("Update a user with an ID that does not exist in the system. Server must return 404 Not Found")
+    void updateUser_withNonExistentId_shouldReturn404() {
+        int nonExistentId = 999_999_999;
+        User user = TestDataGenerator.randomUser();
+        Response response = userApi.updateUser(nonExistentId, user);
+        AssertionHelper.assertStatusCode(response, 404);
+        AssertionHelper.assertErrorMessage(response, "Resource not found");
+        log.info("[Scenario 19] PASS — ID={} correctly returned 404", nonExistentId);
+    }
+
+    // ─── Scenario 20 ───────────────────────────────────────────
+    @Test
+    @Order(20)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 20] POST /users — name is longer than 200 characters should return 422")
+    @Description("Try to create a user with a name longer than 200 characters. Server must reject with 422 Unprocessable Entity")
+    void createUser_withNameLongerThan200Characters_shouldReturn422() {
+        User user = TestDataGenerator.randomUser();
+        user.setName("a".repeat(201));
+        Response response = userApi.createUser(user);
+        AssertionHelper.assertStatusCode(response, 422);
+        AssertionHelper.assertValidationError(response, "name", "is too long (maximum is 200 characters)");
+        log.info("[Scenario 20] PASS — name too long correctly returned 422, body={}",
+                response.body().asString());
+    }
+
+    // ─── Scenario 21 ───────────────────────────────────────────
+    @Test
+    @Order(21)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 21] POST /users — email is longer than 200 characters should return 422")
+    @Description("Try to create a user with an email longer than 200 characters. Server must reject with 422 Unprocessable Entity")
+    void createUser_withEmailLongerThan200Characters_shouldReturn422() {
+        User user = TestDataGenerator.randomUser();
+        user.setEmail("a".repeat(201));
+        Response response = userApi.createUser(user);
+        AssertionHelper.assertStatusCode(response, 422);
+        AssertionHelper.assertValidationError(response, "email", "is too long (maximum is 200 characters), is invalid");
+        log.info("[Scenario 21] PASS — email too long correctly returned 422, body={}",
+                response.body().asString());
+    }
+
+    // ─── Scenario 22 ───────────────────────────────────────────
+    @Test
+    @Order(22)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 22] PUT /users — name is longer than 200 characters should return 422")
+    @Description("Try to create a user with a name longer than 200 characters. Server must reject with 422 Unprocessable Entity")
+    void updateUser_withNameLongerThan200Characters_shouldReturn422() {
+        createUserWithDefaultUser();
+        User user = TestDataGenerator.randomUser();
+        user.setName("a".repeat(201));
+        Response response = userApi.updateUser(helperUserId, user);
+        AssertionHelper.assertStatusCode(response, 422);
+        AssertionHelper.assertValidationError(response, "name", "is too long (maximum is 200 characters)");
+        log.info("[Scenario 22] PASS — name too long correctly returned 422, body={}",
+                response.body().asString());
+    }
+
+    // ─── Scenario 23 ───────────────────────────────────────────
+    @Test
+    @Order(23)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 23] PUT /users — email is longer than 200 characters should return 422")
+    @Description("Try to create a user with an email longer than 200 characters. Server must reject with 422 Unprocessable Entity")
+    void updateUser_withEmailLongerThan200Characters_shouldReturn422() {
+        createUserWithDefaultUser();
+        User user = TestDataGenerator.randomUser();
+        user.setEmail("a".repeat(201));
+        Response response = userApi.updateUser(helperUserId, user);
+        AssertionHelper.assertStatusCode(response, 422);
+        AssertionHelper.assertValidationError(response, "email", "is too long (maximum is 200 characters), is invalid");
+        log.info("[Scenario 23] PASS — email too long correctly returned 422, body={}",
+                response.body().asString());
+    }
+
 }

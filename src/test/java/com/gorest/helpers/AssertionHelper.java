@@ -45,11 +45,30 @@ public final class AssertionHelper {
                 .isNotNull();
     }
 
-    /** Assert that the response body contains an error message. */
-    public static void assertContainsMessage(Response response, String expectedFragment) {
-        String body = response.body().asString();
-        assertThat(body)
-                .as("Response body should contain '%s'", expectedFragment)
-                .containsIgnoringCase(expectedFragment);
+    /** 
+     * Reusable assertion for GoRest validation errors.
+     * Expects a JSON array like: [{"field": "email", "message": "can't be blank"}]
+     */
+    public static void assertValidationError(Response response, String expectedField, String expectedMessage) {
+        // ใช้ GPath ของ REST Assured เพื่อค้นหา object ใน array ที่มี field ตรงกัน
+        String actualMessage = response.jsonPath().getString("find { it.field == '" + expectedField + "' }.message");
+        
+        assertThat(actualMessage)
+                .as("Validation message for field '%s'", expectedField)
+                .isNotNull()
+                .isEqualTo(expectedMessage);
+    }
+
+    /** 
+     * Reusable assertion for generic error messages.
+     * Expects a JSON object like: {"message": "Resource not found"}
+     */
+    public static void assertErrorMessage(Response response, String expectedMessage) {
+        String actualMessage = response.jsonPath().getString("message");
+        
+        assertThat(actualMessage)
+                .as("Error message")
+                .isNotNull()
+                .isEqualTo(expectedMessage);
     }
 }
