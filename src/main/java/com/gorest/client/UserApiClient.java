@@ -61,10 +61,10 @@ public class UserApiClient {
                 .get(USERS_PATH);
     }
 
-    /** GET /users/{id} — get a single user (public) */
+    /** GET /users/{id} — get a single user (auth included) */
     public Response getUser(int userId) {
         log.info("GET {}/{}", USERS_PATH, userId);
-        return baseSpec()
+        return authSpec()
                 .pathParam("id", userId)
                 .when()
                 .get(USERS_PATH + "/{id}");
