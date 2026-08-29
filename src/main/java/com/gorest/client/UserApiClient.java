@@ -52,11 +52,19 @@ public class UserApiClient {
     }
 
     /** GET /users?page=X&per_page=Y — list users with pagination */
-    public Response listUsers(int page, int perPage) {
-        log.info("GET {}?page={}&per_page={}", USERS_PATH, page, perPage);
-        return baseSpec()
-                .queryParam("page", page)
-                .queryParam("per_page", perPage)
+    // public Response listUsers(int page, int perPage) {
+    //     log.info("GET {}?page={}&per_page={}", USERS_PATH, page, perPage);
+    //     return baseSpec()
+    //             .queryParam("page", page)
+    //             .queryParam("per_page", perPage)
+    //             .when()
+    //             .get(USERS_PATH);
+    // }
+
+    /** GET /users — list all users(auth required) */
+    public Response listAllUsers() {
+        log.info("GET {}", USERS_PATH);
+        return authSpec()
                 .when()
                 .get(USERS_PATH);
     }
