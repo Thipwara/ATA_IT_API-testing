@@ -93,20 +93,20 @@ class UserValidationTest extends BaseTest {
     void updateUser_withInvalidGender_shouldReturn422() {
         Assumptions.assumeTrue(helperUserId > 0, "Skipping — no helper user was created in Scenario 6");
 
-        // ส่งค่า gender ที่ไม่ถูกต้อง
-        String invalidPayload = """
-                {
-                    "gender": "unknown",
-                    "status": "active"
-                }
-                """;
+        // ส่ง User object ที่มีค่า gender ไม่ถูกต้องผ่าน PUT
+        User invalidPayload = new User(
+                TestDataGenerator.randomName(),
+                helperUserEmail,
+                "unknown",   // gender ผิดกฎ (ต้องเป็น male หรือ female)
+                "active"
+        );
 
-        Response response = userApi.patchUser(helperUserId, invalidPayload);
+        Response response = userApi.updateUser(helperUserId, invalidPayload);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertContainsMessage(response, "gender");
 
-        log.info("[Scenario 8] PASS — invalid gender rejected with 422");
+        log.info("[Scenario 8] PASS — invalid gender on PUT rejected with 422");
 
         // Cleanup helper user
         userApi.deleteUser(helperUserId);

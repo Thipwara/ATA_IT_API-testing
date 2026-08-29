@@ -89,16 +89,6 @@ public class UserApiClient {
                 .put(USERS_PATH + "/{id}");
     }
 
-    /** PATCH /users/{id} — partial update (auth required) */
-    public Response patchUser(int userId, String bodyJson) {
-        log.info("PATCH {}/{} — payload={}", USERS_PATH, userId, bodyJson);
-        return authSpec()
-                .body(bodyJson)
-                .pathParam("id", userId)
-                .when()
-                .patch(USERS_PATH + "/{id}");
-    }
-
     /** DELETE /users/{id} — delete a user (auth required) */
     public Response deleteUser(int userId) {
         log.info("DELETE {}/{}", USERS_PATH, userId);
