@@ -19,8 +19,8 @@ public abstract class BaseTest {
 
     @BeforeAll
     static void globalSetup() {
-        // Log every request/response to stdout for debugging
-        RestAssured.filters(
+        // Log every request/response to stdout for debugging (use replace to avoid duplicates across test classes)
+        RestAssured.replaceFiltersWith(
                 new RequestLoggingFilter(),
                 new ResponseLoggingFilter()
         );
