@@ -1,6 +1,7 @@
 # GoRest API Automation Test Suite
 
 A robust, maintainable, and scalable API automation testing framework for the [GoRest Public API v2](https://gorest.co.in/public/v2). Built with **Java 17**, **REST Assured**, **JUnit 5**, and **Allure Reporting**.
+<img width="1468" height="817" alt="Screenshot 2569-08-30 at 23 30 42" src="https://github.com/user-attachments/assets/99f4881b-25a2-4d6e-9dcd-178f514049c5" />
 
 ---
 
