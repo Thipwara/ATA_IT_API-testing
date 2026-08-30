@@ -190,3 +190,14 @@ mvn allure:serve
 
 ---
 
+## 🎯 Future Improvement
+
+### Short-term (1-2 weeks)
+- Implement JSON schema validation for responses
+- Enhance error scenario coverage (negative tests)
+
+### Medium-term (3-4 weeks)
+- Performance baseline testing
+
+
+
