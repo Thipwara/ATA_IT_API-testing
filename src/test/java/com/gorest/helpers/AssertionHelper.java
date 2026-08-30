@@ -7,17 +7,12 @@ import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Reusable assertion helpers that provide descriptive failure messages
- * and reduce boilerplate in test classes.
- */
 public final class AssertionHelper {
 
     private static final Logger log = LoggerFactory.getLogger(AssertionHelper.class);
 
     private AssertionHelper() { }
 
-    /** Assert that the response has the expected HTTP status code. */
     public static void assertStatusCode(Response response, int expected) {
         int actual = response.statusCode();
         if (actual != expected) {
@@ -29,7 +24,6 @@ public final class AssertionHelper {
                 .isEqualTo(expected);
     }
 
-    /** Assert that a returned User matches the expected field values. */
     public static void assertUserFields(User actual, User expected) {
         assertThat(actual.getName()).as("User name").isEqualTo(expected.getName());
         assertThat(actual.getEmail()).as("User email").isEqualTo(expected.getEmail());
@@ -37,7 +31,6 @@ public final class AssertionHelper {
         assertThat(actual.getStatus()).as("User status").isEqualTo(expected.getStatus());
     }
 
-    /** Assert that the response body contains a specific JSON field. */
     public static void assertFieldNotNull(Response response, String jsonPath) {
         Object value = response.jsonPath().get(jsonPath);
         assertThat(value)
@@ -45,12 +38,7 @@ public final class AssertionHelper {
                 .isNotNull();
     }
 
-    /** 
-     * Reusable assertion for GoRest validation errors.
-     * Expects a JSON array like: [{"field": "email", "message": "can't be blank"}]
-     */
     public static void assertValidationError(Response response, String expectedField, String expectedMessage) {
-        // ใช้ GPath ของ REST Assured เพื่อค้นหา object ใน array ที่มี field ตรงกัน
         String actualMessage = response.jsonPath().getString("find { it.field == '" + expectedField + "' }.message");
         
         assertThat(actualMessage)
@@ -59,10 +47,6 @@ public final class AssertionHelper {
                 .isEqualTo(expectedMessage);
     }
 
-    /** 
-     * Reusable assertion for generic error messages.
-     * Expects a JSON object like: {"message": "Resource not found"}
-     */
     public static void assertErrorMessage(Response response, String expectedMessage) {
         String actualMessage = response.jsonPath().getString("message");
         

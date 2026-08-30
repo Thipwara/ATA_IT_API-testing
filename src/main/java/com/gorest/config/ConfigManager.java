@@ -9,10 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-/**
- * Centralized configuration loader.
- * Priority: System property > .env file > default value.
- */
 public final class ConfigManager {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
@@ -39,15 +35,11 @@ public final class ConfigManager {
     }
 
     public static String get(String key) {
-        // System property takes highest priority
         String value = System.getProperty(key);
         if (value != null) return value;
 
-        // Then .env
         value = props.getProperty(key);
         if (value != null) return value;
-
-        // Then environment variable
         return System.getenv(key);
     }
 

@@ -3,10 +3,6 @@ package com.gorest.models;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/**
- * POJO representing a GoRest User resource.
- * Used for both request payloads and response deserialization.
- */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class User {
@@ -14,10 +10,8 @@ public class User {
     private Integer id;
     private String name;
     private String email;
-    private String gender;   // "male" | "female"
-    private String status;   // "active" | "inactive"
-
-    // ── Constructors ──────────────────────────────────────────
+    private String gender;   
+    private String status;   
 
     public User() { }
 
@@ -27,8 +21,6 @@ public class User {
         this.gender = gender;
         this.status = status;
     }
-
-    // ── Getters / Setters ─────────────────────────────────────
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

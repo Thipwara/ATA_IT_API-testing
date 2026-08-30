@@ -12,6 +12,9 @@ import io.qameta.allure.SeverityLevel;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.*;
 
 @Feature("Users Edge Cases & Security")
@@ -162,6 +165,41 @@ class UserEdgeCaseTest extends BaseTest {
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "is too long (maximum is 200 characters), is invalid");
         log.info("[Scenario 23] PASS — email too long correctly returned 422, body={}",
+                response.body().asString());
+    }
+
+    // ─── Scenario 24 ───────────────────────────────────────────
+    @Test
+    @Order(24)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 24] POST /users — create user name with special character will return success")
+    @Description("Try to create a user with an name with special character. Server must return 201 Created")
+    void createUser_withNameWithSpecialCharacter_shouldReturnSuccess() {
+        User user = TestDataGenerator.randomUser();
+        user.setName("!@#$%^&*()");
+        Response response = userApi.createUser(user);
+        AssertionHelper.assertStatusCode(response, 201);
+
+        User created = response.as(User.class);
+        assertThat(created.getId()).as("Created user ID should not be null").isNotNull().isPositive();
+        AssertionHelper.assertUserFields(created, user);
+        log.info("[Scenario 24] PASS — create user name with special character correctly returned 201, body={}",
+                response.body().asString());
+    }
+
+    // ─── Scenario 25 ───────────────────────────────────────────
+    @Test
+    @Order(25)
+    @Severity(SeverityLevel.NORMAL)
+    @DisplayName("[Scenario 25] PUT /users — update user name with special character will return success")
+    @Description("Try to update a user with an name with special character. Server must return 200 OK")
+    void updateUser_withNameWithSpecialCharacter_shouldReturnSuccess() {
+        createUserWithDefaultUser();
+        User user = TestDataGenerator.randomUser();
+        user.setName("!!!???");
+        Response response = userApi.updateUser(helperUserId, user);
+        AssertionHelper.assertStatusCode(response, 200);
+        log.info("[Scenario 25] PASS — update user name with special character correctly returned 200, body={}",
                 response.body().asString());
     }
 
