@@ -11,27 +11,31 @@ import io.qameta.allure.SeverityLevel;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Feature("Users Validation")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserValidationTest extends BaseTest {
 
-    private static int helperUserId;
-    private static String helperUserEmail;
+    private static int defaultUserId;
+    private static String defaultUserEmail;
 
-    void createFirstUser() {
+    @BeforeAll
+    static void setupDefaultUser() {
         User firstUser = TestDataGenerator.randomUser();
         Response firstResponse = userApi.createUser(firstUser);
         AssertionHelper.assertStatusCode(firstResponse, 201);
-        helperUserId = firstResponse.jsonPath().getInt("id");
-        helperUserEmail = firstUser.getEmail();
-    };
+        defaultUserId = firstResponse.jsonPath().getInt("id");
+        defaultUserEmail = firstUser.getEmail();
+        log.info("Setup — created default user ID={} for validation tests", defaultUserId);
+    }
 
-    void cleanUpHelperUser() {
-        userApi.deleteUser(helperUserId);
-        log.info("Cleanup — deleted helper user ID={}", helperUserId);
-    };
+    @AfterAll
+    static void cleanUpDefaultUser() {
+        if (defaultUserId > 0) {
+            userApi.deleteUser(defaultUserId);
+            log.info("Cleanup — deleted helper user ID={}", defaultUserId);
+        }
+    }
 
     // ─── Scenario 7 ────────────────────────────────────────────
 
@@ -41,14 +45,10 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 7] POST /users — duplicate email should return 422")
     @Description("Attempt to create two users with the same email. Second request must return 422 with 'already been taken' message")
     void createUser_withDuplicateEmail_shouldReturn422() {
-        createFirstUser();
-        User duplicateUser = new User(
-                TestDataGenerator.randomName(),
-                helperUserEmail,
-                "male",
-                "active"
-        );
-        Response response = userApi.createUser(duplicateUser);
+        User duplicateEmailUser = TestDataGenerator.randomUser();
+        duplicateEmailUser.setEmail(defaultUserEmail);
+
+        Response response = userApi.createUser(duplicateEmailUser);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "has already been taken");
@@ -92,7 +92,7 @@ class UserValidationTest extends BaseTest {
             ""
         );
 
-        Response response = userApi.updateUser(helperUserId, incompleteUpdateUser);
+        Response response = userApi.updateUser(defaultUserId, incompleteUpdateUser);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "can't be blank");
@@ -111,14 +111,10 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 10] POST /users — invalid gender value should return 422")
     @Description("Attempt to create a user with an invalid 'gender' value (not 'male'/'female'). Server must reject with 422")
     void createUser_withInvalidGender_shouldReturn422() {
-        User invalidPayload = new User(
-                TestDataGenerator.randomName(),
-                TestDataGenerator.uniqueEmail(),
-                "unknown",
-                "active"
-        );
+        User invalidUserGender = TestDataGenerator.randomUser();
+        invalidUserGender.setGender("unknown");
 
-        Response response = userApi.createUser(invalidPayload);
+        Response response = userApi.createUser(invalidUserGender);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "gender", "can't be blank, can be male of female");
@@ -133,16 +129,12 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 11] PUT /users/{id} — invalid gender value should return 422")
     @Description("Update a user with an invalid 'gender' value (not 'male'/'female'). Server must reject with 422")
     void updateUser_withInvalidGender_shouldReturn422() {
-        Assumptions.assumeTrue(helperUserId > 0, "Skipping — no helper user was created in Scenario 6");
+        Assumptions.assumeTrue(defaultUserId > 0, "Skipping — no default user was created in setup");
 
-        User invalidPayload = new User(
-                TestDataGenerator.randomName(),
-                helperUserEmail,
-                "unknown",
-                "active"
-        );
+        User invalidUserGender = TestDataGenerator.randomUser();
+        invalidUserGender.setGender("unknown");
 
-        Response response = userApi.updateUser(helperUserId, invalidPayload);
+        Response response = userApi.updateUser(defaultUserId, invalidUserGender);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "gender", "can't be blank, can be male of female");
@@ -158,14 +150,10 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 12] POST /users — invalid status value should return 422")
     @Description("Attempt to create a user with an invalid 'status' value (not 'active'/'inactive'). Server must reject with 422")
     void createUser_withInvalidStatus_shouldReturn422() {
-        User invalidStatusPayload = new User(
-                TestDataGenerator.randomName(),
-                TestDataGenerator.uniqueEmail(),
-                "male",
-                "unknown"
-        );
+        User invalidUserStatus = TestDataGenerator.randomUser();
+        invalidUserStatus.setStatus("unknown");
 
-        Response response = userApi.createUser(invalidStatusPayload);
+        Response response = userApi.createUser(invalidUserStatus);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "status", "can't be blank");
@@ -181,16 +169,12 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 13] PUT /users/{id} — invalid status value should return 422")
     @Description("Update a user with an invalid 'status' value (not 'active'/'inactive'). Server must reject with 422")
     void updateUser_withInvalidStatus_shouldReturn422() {
-        Assumptions.assumeTrue(helperUserId > 0, "Skipping — no helper user was created in Scenario 6");
+        Assumptions.assumeTrue(defaultUserId > 0, "Skipping — no default user was created in setup");
 
-        User invalidStatusPayload = new User(
-                TestDataGenerator.randomName(),
-                helperUserEmail,
-                "male",
-                "invalidStatus"
-        );
+        User invalidUserStatus = TestDataGenerator.randomUser();
+        invalidUserStatus.setStatus("unknown");
 
-        Response response = userApi.updateUser(helperUserId, invalidStatusPayload);
+        Response response = userApi.updateUser(defaultUserId, invalidUserStatus);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "status", "can't be blank");
@@ -206,14 +190,10 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 14] POST /users — invalid email format should return 422")
     @Description("Attempt to create a user with an invalid email format. Server must return 422 with field-level error messages")
     void createUser_withInvalidEmailFormat_shouldReturn422() {
-        User invalidEmailPayload = new User(
-                TestDataGenerator.randomName(),
-                "invalidEmail",
-                "male",
-                "active"
-        );
+        User invalidUserEmail = TestDataGenerator.randomUser();
+        invalidUserEmail.setEmail("invalidEmail");
 
-        Response response = userApi.createUser(invalidEmailPayload);
+        Response response = userApi.createUser(invalidUserEmail);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "is invalid");
@@ -229,16 +209,12 @@ class UserValidationTest extends BaseTest {
     @DisplayName("[Scenario 15] PUT /users — invalid email format should return 422")
     @Description("Attempt to update a user with an invalid email format. Server must return 422 with field-level error messages")
     void updateUser_withInvalidEmailFormat_shouldReturn422() {
-        Assumptions.assumeTrue(helperUserId > 0, "Skipping — no helper user was created in Scenario 6");
+        Assumptions.assumeTrue(defaultUserId > 0, "Skipping — no default user was created in setup");
 
-        User invalidEmailPayload = new User(
-                TestDataGenerator.randomName(),
-                "invalidEmail",
-                "male",
-                "active"
-        );
+        User invalidUserEmail = TestDataGenerator.randomUser();
+        invalidUserEmail.setEmail("invalidEmail");
 
-        Response response = userApi.updateUser(helperUserId, invalidEmailPayload);
+        Response response = userApi.updateUser(defaultUserId, invalidUserEmail);
 
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "is invalid");
