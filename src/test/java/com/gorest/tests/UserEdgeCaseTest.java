@@ -20,14 +20,23 @@ import org.junit.jupiter.api.*;
 @Feature("Users Edge Cases & Security")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserEdgeCaseTest extends BaseTest {
-    private static int helperUserId;
+    private static int defaultUserId;
 
-    void createUserWithDefaultUser() {
+    @BeforeAll
+    static void createUserWithDefaultUser() {
         User defaultUser = TestDataGenerator.randomUser();
         Response defaultUserResponse = userApi.createUser(defaultUser);
         AssertionHelper.assertStatusCode(defaultUserResponse, 201);
-        helperUserId = defaultUserResponse.jsonPath().getInt("id");
+        defaultUserId = defaultUserResponse.jsonPath().getInt("id");
     };
+
+    @AfterAll
+    static void cleanUpDefaultUser() {
+        if (defaultUserId > 0) {
+            userApi.deleteUser(defaultUserId);
+            log.info("Cleanup — deleted default user ID={}", defaultUserId);
+        }
+    }
 
     // ─── Scenario 16 ────────────────────────────────────────────
 
@@ -141,10 +150,9 @@ class UserEdgeCaseTest extends BaseTest {
     @DisplayName("[Scenario 22] PUT /users — name is longer than 200 characters should return 422")
     @Description("Try to create a user with a name longer than 200 characters. Server must reject with 422 Unprocessable Entity")
     void updateUser_withNameLongerThan200Characters_shouldReturn422() {
-        createUserWithDefaultUser();
         User user = TestDataGenerator.randomUser();
         user.setName("a".repeat(201));
-        Response response = userApi.updateUser(helperUserId, user);
+        Response response = userApi.updateUser(defaultUserId, user);
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "name", "is too long (maximum is 200 characters)");
         log.info("[Scenario 22] PASS — name too long correctly returned 422, body={}",
@@ -158,10 +166,9 @@ class UserEdgeCaseTest extends BaseTest {
     @DisplayName("[Scenario 23] PUT /users — email is longer than 200 characters should return 422")
     @Description("Try to create a user with an email longer than 200 characters. Server must reject with 422 Unprocessable Entity")
     void updateUser_withEmailLongerThan200Characters_shouldReturn422() {
-        createUserWithDefaultUser();
         User user = TestDataGenerator.randomUser();
         user.setEmail("a".repeat(201));
-        Response response = userApi.updateUser(helperUserId, user);
+        Response response = userApi.updateUser(defaultUserId, user);
         AssertionHelper.assertStatusCode(response, 422);
         AssertionHelper.assertValidationError(response, "email", "is too long (maximum is 200 characters), is invalid");
         log.info("[Scenario 23] PASS — email too long correctly returned 422, body={}",
@@ -194,10 +201,9 @@ class UserEdgeCaseTest extends BaseTest {
     @DisplayName("[Scenario 25] PUT /users — update user name with special character will return success")
     @Description("Try to update a user with an name with special character. Server must return 200 OK")
     void updateUser_withNameWithSpecialCharacter_shouldReturnSuccess() {
-        createUserWithDefaultUser();
         User user = TestDataGenerator.randomUser();
         user.setName("!!!???");
-        Response response = userApi.updateUser(helperUserId, user);
+        Response response = userApi.updateUser(defaultUserId, user);
         AssertionHelper.assertStatusCode(response, 200);
         log.info("[Scenario 25] PASS — update user name with special character correctly returned 200, body={}",
                 response.body().asString());

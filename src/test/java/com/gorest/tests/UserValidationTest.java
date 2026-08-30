@@ -33,7 +33,7 @@ class UserValidationTest extends BaseTest {
     static void cleanUpDefaultUser() {
         if (defaultUserId > 0) {
             userApi.deleteUser(defaultUserId);
-            log.info("Cleanup — deleted helper user ID={}", defaultUserId);
+            log.info("Cleanup — deleted default user ID={}", defaultUserId);
         }
     }
 
