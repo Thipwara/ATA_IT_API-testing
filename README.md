@@ -74,8 +74,7 @@ gorest-api-tests/
 ### 2. Setup Project
 Clone the repository:
 ```bash
-git clone <your-repository-url>
-cd gorest-api-tests
+git clone https://github.com/Thipwara/ATA_IT_API-testing.git
 ```
 
 ---
